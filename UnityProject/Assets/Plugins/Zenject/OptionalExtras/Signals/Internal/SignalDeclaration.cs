@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using ModestTree;
-#if ZEN_SIGNALS_ADD_UNIRX
-using UniRx;
-#endif
 
 namespace Zenject
 {
@@ -15,10 +12,6 @@ namespace Zenject
         readonly SignalMissingHandlerResponses _missingHandlerResponses;
         readonly bool _isAsync;
         readonly ZenjectSettings.SignalSettings _settings;
-
-#if ZEN_SIGNALS_ADD_UNIRX
-        readonly Subject<object> _stream = new Subject<object>();
-#endif
 
         [Inject]
         public SignalDeclaration(
@@ -34,13 +27,6 @@ namespace Zenject
             _isAsync = bindInfo.RunAsync;
             TickPriority = bindInfo.TickPriority;
         }
-
-#if ZEN_SIGNALS_ADD_UNIRX
-        public IObservable<object> Stream
-        {
-            get { return _stream; }
-        }
-#endif
 
 		public List<SignalSubscription> Subscriptions => _subscriptions;
 
@@ -105,9 +91,6 @@ namespace Zenject
         void FireInternal(List<SignalSubscription> subscriptions, object signal)
         {
             if (subscriptions.IsEmpty()
-#if ZEN_SIGNALS_ADD_UNIRX
-                && !_stream.HasObservers
-#endif
                 )
             {
                 if (_missingHandlerResponses == SignalMissingHandlerResponses.Warn)
@@ -132,10 +115,6 @@ namespace Zenject
                     subscription.Invoke(signal);
                 }
             }
-
-#if ZEN_SIGNALS_ADD_UNIRX
-            _stream.OnNext(signal);
-#endif
         }
 
         public void Tick()
